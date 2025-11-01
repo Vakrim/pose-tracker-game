@@ -19,7 +19,7 @@ export class PoseDetector {
 
     // Initialize MoveNet model
     const detectorConfig: poseDetection.MoveNetModelConfig = {
-      modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+      modelType: poseDetection.movenet.modelType.MULTIPOSE_LIGHTNING,
       enableSmoothing: true,
       multiPoseMaxDimension: 256,
       enableTracking: false,

@@ -1,5 +1,6 @@
-import { PoseDetector } from './poseDetector';
-import { PoseDrawer } from './poseDrawer';
+import { BoxingGame, Game } from "./game";
+import { PoseDetector } from "./poseDetector";
+import { PoseDrawer } from "./poseDrawer";
 
 class App {
   private video: HTMLVideoElement;
@@ -8,15 +9,18 @@ class App {
   private poseDetector: PoseDetector;
   private poseDrawer: PoseDrawer;
   private loadingElement: HTMLElement;
+  private game: Game;
+  private lastTime: number = performance.now();
 
   constructor() {
-    this.video = document.getElementById('video') as HTMLVideoElement;
-    this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
-    this.ctx = this.canvas.getContext('2d')!;
-    this.loadingElement = document.getElementById('loading') as HTMLElement;
+    this.video = document.getElementById("video") as HTMLVideoElement;
+    this.canvas = document.getElementById("canvas") as HTMLCanvasElement;
+    this.ctx = this.canvas.getContext("2d")!;
+    this.loadingElement = document.getElementById("loading") as HTMLElement;
     this.poseDetector = new PoseDetector();
     this.poseDrawer = new PoseDrawer(this.ctx);
-    
+    this.game = new BoxingGame();
+
     this.init();
   }
 
@@ -24,39 +28,38 @@ class App {
     try {
       // Request webcam access
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
+        video: {
           width: { ideal: 1280 },
           height: { ideal: 720 },
-          facingMode: 'user'
-        }
+          facingMode: "user",
+        },
       });
 
       this.video.srcObject = stream;
-      
+
       // Wait for video to be ready
-      this.video.addEventListener('loadedmetadata', () => {
+      this.video.addEventListener("loadedmetadata", () => {
         this.resizeCanvas();
-        this.loadingElement.textContent = 'Initializing MoveNet...';
+        this.loadingElement.textContent = "Initializing MoveNet...";
         this.initializePoseDetector();
       });
 
       // Handle window resize
-      window.addEventListener('resize', () => this.resizeCanvas());
-
+      window.addEventListener("resize", () => this.resizeCanvas());
     } catch (error) {
-      console.error('Error accessing webcam:', error);
-      this.loadingElement.textContent = 'Error: Could not access webcam';
+      console.error("Error accessing webcam:", error);
+      this.loadingElement.textContent = "Error: Could not access webcam";
     }
   }
 
   private async initializePoseDetector(): Promise<void> {
     try {
       await this.poseDetector.initialize();
-      this.loadingElement.style.display = 'none';
-      this.detectPose();
+      this.loadingElement.style.display = "none";
+      this.gameloop();
     } catch (error) {
-      console.error('Error initializing pose detector:', error);
-      this.loadingElement.textContent = 'Error: Failed to load MoveNet model';
+      console.error("Error initializing pose detector:", error);
+      this.loadingElement.textContent = "Error: Failed to load MoveNet model";
     }
   }
 
@@ -67,11 +70,13 @@ class App {
     this.canvas.height = this.video.videoHeight || 480;
   }
 
-  private detectPose = async (): Promise<void> => {
+  private gameloop = async (): Promise<void> => {
     if (this.video.readyState === this.video.HAVE_ENOUGH_DATA) {
       // Ensure canvas matches video dimensions
-      if (this.canvas.width !== this.video.videoWidth || 
-          this.canvas.height !== this.video.videoHeight) {
+      if (
+        this.canvas.width !== this.video.videoWidth ||
+        this.canvas.height !== this.video.videoHeight
+      ) {
         this.resizeCanvas();
       }
 
@@ -80,20 +85,23 @@ class App {
 
       // Detect poses
       const poses = await this.poseDetector.detect(this.video);
-      
-      // Debug: Log detection results
-      if (poses && poses.length > 0) {
-        console.log(`Detected ${poses.length} pose(s)`);
-        if (poses[0].keypoints) {
-          console.log(`Keypoints: ${poses[0].keypoints.length}`, poses[0].keypoints.slice(0, 3));
+
+      if (this.game.isInitialized) {
+        if (poses && poses.length > 0) {
+          this.game.update(
+            performance.now() - this.lastTime,
+            poses,
+            this.ctx,
+            this.canvas,
+          );
         }
+        this.game.draw(this.ctx, this.canvas);
       } else {
-        // Log every 60 frames to avoid spam
-        if (Math.random() < 0.017) { // ~1/60 chance
-          console.log('No poses detected');
-        }
+        this.game.initialize();
       }
-      
+
+      this.lastTime = performance.now();
+
       // Draw poses
       if (poses && poses.length > 0) {
         this.poseDrawer.drawPoses(poses, this.canvas.width, this.canvas.height);
@@ -101,14 +109,13 @@ class App {
     }
 
     // Continue detection loop
-    requestAnimationFrame(this.detectPose);
+    requestAnimationFrame(this.gameloop);
   };
 }
 
 // Start the app when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => new App());
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => new App());
 } else {
   new App();
 }
-
