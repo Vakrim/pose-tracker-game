@@ -1,4 +1,6 @@
-import { BoxingGame, Game } from "./game";
+import { Game } from "./game";
+import { BoxingGame } from "./BoxingGame";
+import { Pose } from "./Pose";
 import { PoseDetector } from "./poseDetector";
 import { PoseDrawer } from "./poseDrawer";
 
@@ -9,7 +11,7 @@ class App {
   private poseDetector: PoseDetector;
   private poseDrawer: PoseDrawer;
   private loadingElement: HTMLElement;
-  private game: Game;
+  private game: Game | null;
   private lastTime: number = performance.now();
 
   constructor() {
@@ -19,7 +21,7 @@ class App {
     this.loadingElement = document.getElementById("loading") as HTMLElement;
     this.poseDetector = new PoseDetector();
     this.poseDrawer = new PoseDrawer(this.ctx);
-    this.game = new BoxingGame();
+    this.game = null;
 
     this.init();
   }
@@ -78,31 +80,36 @@ class App {
         this.canvas.height !== this.video.videoHeight
       ) {
         this.resizeCanvas();
+        this.game = null;
       }
 
       // Clear canvas
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+      this.ctx.strokeStyle = "white";
+      this.ctx.lineWidth = 1;
+      this.ctx.strokeRect(0, 0, this.canvas.width, this.canvas.height);
+
       // Detect poses
       const poses = await this.poseDetector.detect(this.video);
 
-      if (this.game.isInitialized) {
-        if (poses && poses.length > 0) {
-          this.game.update(
-            performance.now() - this.lastTime,
-            poses,
-            this.ctx,
-            this.canvas,
-          );
-        }
-        this.game.draw(this.ctx, this.canvas);
-      } else {
-        this.game.initialize();
+      if (!this.game) {
+        this.game = new BoxingGame(this.canvas.width, this.canvas.height);
       }
+
+      if (poses && poses.length > 0) {
+        this.game.update(
+          (performance.now() - this.lastTime) / 1000,
+          poses.map((pose) => new Pose(pose, this.canvas.width)),
+          this.ctx,
+          this.canvas,
+        );
+      }
+
+      this.game.draw(this.ctx);
 
       this.lastTime = performance.now();
 
-      // Draw poses
       if (poses && poses.length > 0) {
         this.poseDrawer.drawPoses(poses, this.canvas.width, this.canvas.height);
       }

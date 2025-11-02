@@ -1,6 +1,6 @@
 import * as poseDetection from "@tensorflow-models/pose-detection";
 
-const KEYPOINTS_INDEX = {
+export const KEYPOINTS_INDEX = {
   NOSE: 0,
   LEFT_EYE: 1,
   RIGHT_EYE: 2,
@@ -19,32 +19,6 @@ const KEYPOINTS_INDEX = {
   LEFT_ANKLE: 15,
   RIGHT_ANKLE: 16,
 };
-
-export function getRightWrist(
-  canvasWidth: number,
-  pose: poseDetection.Pose,
-): poseDetection.Keypoint | null {
-  const candidate = pose.keypoints[KEYPOINTS_INDEX.RIGHT_WRIST];
-
-  if (!candidate.score || candidate.score < 0.3) {
-    return null;
-  }
-
-  return { x: canvasWidth - candidate.x, y: candidate.y };
-}
-
-export function getLeftWrist(
-  canvasWidth: number,
-  pose: poseDetection.Pose,
-): poseDetection.Keypoint | null {
-  const candidate = pose.keypoints[KEYPOINTS_INDEX.LEFT_WRIST];
-
-  if (!candidate.score || candidate.score < 0.3) {
-    return null;
-  }
-
-  return { x: canvasWidth - candidate.x, y: candidate.y };
-}
 
 // MoveNet keypoint connections (skeleton structure)
 const POSE_CONNECTIONS: Array<[number, number]> = [
