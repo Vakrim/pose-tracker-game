@@ -58,7 +58,7 @@ class App {
     try {
       await this.poseDetector.initialize();
       this.loadingElement.style.display = "none";
-      this.gameloop();
+      this.gameLoop();
     } catch (error) {
       console.error("Error initializing pose detector:", error);
       this.loadingElement.textContent = "Error: Failed to load MoveNet model";
@@ -72,7 +72,7 @@ class App {
     this.canvas.height = this.video.videoHeight || 480;
   }
 
-  private gameloop = async (): Promise<void> => {
+  private gameLoop = async (): Promise<void> => {
     if (this.video.readyState === this.video.HAVE_ENOUGH_DATA) {
       // Ensure canvas matches video dimensions
       if (
@@ -111,12 +111,12 @@ class App {
       this.lastTime = performance.now();
 
       if (poses && poses.length > 0) {
-        this.poseDrawer.drawPoses(poses, this.canvas.width, this.canvas.height);
+        // this.poseDrawer.drawPoses(poses, this.canvas.width, this.canvas.height);
       }
     }
 
     // Continue detection loop
-    requestAnimationFrame(this.gameloop);
+    requestAnimationFrame(this.gameLoop);
   };
 }
 

@@ -84,4 +84,12 @@ export class DevelopmentPose implements HasWristsPosition {
   public getRightWrist(): Position | null {
     return this.rightWristPosition;
   }
+
+  public getLeftWristAngle(): number | null {
+    return Math.PI / 2;
+  }
+
+  public getRightWristAngle(): number | null {
+    return Math.PI / 2;
+  }
 }

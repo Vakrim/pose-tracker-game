@@ -1,5 +1,7 @@
 import { Game } from "./game";
 import { HasWristsPosition } from "./Pose";
+import zombieAssetSrc from "./assets/zombie.png";
+import swordAssetSrc from "./assets/sword.png";
 
 export interface BoxingTarget {
   x: number;
@@ -15,8 +17,14 @@ export class BoxingGame implements Game {
   private target: BoxingTarget | null = null;
   private unitSize: number;
 
+  private zombieAsset = new Image();
+  private swordAsset = new Image();
+
   constructor(private gameWidth: number, private gameHeight: number) {
     this.unitSize = this.gameHeight / 5;
+
+    this.zombieAsset.src = zombieAssetSrc;
+    this.swordAsset.src = swordAssetSrc;
   }
 
   update(
@@ -27,6 +35,9 @@ export class BoxingGame implements Game {
     if (!this.target) {
       this.createTarget();
     }
+
+    const swordSize = this.unitSize * 0.8;
+    const swordAngle = -(1 * Math.PI) / 4;
 
     const target = this.target!;
 
@@ -44,8 +55,19 @@ export class BoxingGame implements Game {
           isHitting = true;
         }
 
-        ctx.fillStyle = "blue";
-        ctx.fillRect(leftWrist.x - 10, leftWrist.y - 10, 20, 20);
+        const leftWristAngle = pose.getLeftWristAngle() ?? 0;
+
+        ctx.save();
+        ctx.translate(leftWrist.x, leftWrist.y);
+        ctx.rotate(leftWristAngle + swordAngle);
+        ctx.drawImage(
+          this.swordAsset,
+          -swordSize / 2,
+          -swordSize / 2,
+          swordSize,
+          swordSize,
+        );
+        ctx.restore();
       }
 
       if (rightWrist) {
@@ -56,8 +78,19 @@ export class BoxingGame implements Game {
           isHitting = true;
         }
 
-        ctx.fillStyle = "green";
-        ctx.fillRect(rightWrist.x - 10, rightWrist.y - 10, 20, 20);
+        const rightWristAngle = pose.getRightWristAngle() ?? 0;
+
+        ctx.save();
+        ctx.translate(rightWrist.x, rightWrist.y);
+        ctx.rotate(rightWristAngle + swordAngle);
+        ctx.drawImage(
+          this.swordAsset,
+          -swordSize / 2,
+          -swordSize / 2,
+          swordSize,
+          swordSize,
+        );
+        ctx.restore();
       }
     }
 
@@ -112,17 +145,20 @@ export class BoxingGame implements Game {
     const centerY = this.target.y;
     const radius = this.unitSize / 2;
 
-    // Draw background circle (full health)
-    ctx.fillStyle = "rgba(100, 100, 100, 0.3)";
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-    ctx.fill();
+    const zombieSize = radius * 1.2;
 
-    // Draw health pie chart (remaining health)
+    ctx.drawImage(
+      this.zombieAsset,
+      centerX - zombieSize / 2,
+      centerY - zombieSize / 2,
+      zombieSize,
+      zombieSize,
+    );
+
     if (this.target.health > 0) {
-      ctx.fillStyle = "rgba(255, 0, 0, 0.7)";
+      ctx.strokeStyle = "rgba(255, 0, 0, 0.7)";
+      ctx.lineWidth = 15;
       ctx.beginPath();
-      ctx.moveTo(centerX, centerY);
       ctx.arc(
         centerX,
         centerY,
@@ -130,8 +166,7 @@ export class BoxingGame implements Game {
         -Math.PI / 2, // Start from top
         -Math.PI / 2 + (2 * Math.PI * this.target.health) / TARGET_MAX_HEALTH,
       );
-      ctx.closePath();
-      ctx.fill();
+      ctx.stroke();
     }
   }
 }

@@ -1,12 +1,10 @@
 import { DevelopmentPose } from "./developmentPose";
 import { Game } from "./game";
 import { BoxingGame } from "./BoxingGame";
-import { Pose } from "./Pose";
 
 class DevelopmentApp {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
-  private loadingElement: HTMLElement;
   private game: Game | null;
   private lastTime: number = performance.now();
   private developmentPose: DevelopmentPose;
@@ -14,7 +12,6 @@ class DevelopmentApp {
   constructor() {
     this.canvas = document.getElementById("canvas") as HTMLCanvasElement;
     this.ctx = this.canvas.getContext("2d")!;
-    this.loadingElement = document.getElementById("loading") as HTMLElement;
     this.game = null;
     this.developmentPose = new DevelopmentPose(this.canvas);
 
@@ -24,7 +21,7 @@ class DevelopmentApp {
   private async init(): Promise<void> {
     this.resizeCanvas();
 
-    this.gameloop();
+    this.gameLoop();
   }
 
   private resizeCanvas(): void {
@@ -34,7 +31,7 @@ class DevelopmentApp {
     this.canvas.height = 480;
   }
 
-  private gameloop = async (): Promise<void> => {
+  private gameLoop = async (): Promise<void> => {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.ctx.strokeStyle = "white";
@@ -57,7 +54,7 @@ class DevelopmentApp {
     this.lastTime = performance.now();
 
     // Continue detection loop
-    requestAnimationFrame(this.gameloop);
+    requestAnimationFrame(this.gameLoop);
   };
 }
 
